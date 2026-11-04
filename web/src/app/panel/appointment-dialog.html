@@ -1,0 +1,179 @@
+<div class="backdrop" (click)="closed.emit(false)">
+  <div class="dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    @if (appointment(); as a) {
+      <header>
+        <div>
+          <span class="eyebrow">{{ a.source === 'online' ? 'Reservó en línea' : 'Agendada en el panel' }}</span>
+          <h2>{{ a.client.name }}</h2>
+          <p class="muted">{{ a.service.name }} · {{ cop(a.price) }}</p>
+        </div>
+        <button class="btn ghost icon sm" (click)="closed.emit(false)" aria-label="Cerrar">✕</button>
+      </header>
+
+      @if (mode() === 'view') {
+        <div class="facts">
+          <div><span>Cuándo</span><b>{{ longDate(a.starts_at) }}<br />{{ hour(a.starts_at) }} – {{ hour(a.ends_at) }}</b></div>
+          <div><span>Con</span><b><i class="dot" [style.background]="a.professional.color"></i> {{ a.professional.name }}</b></div>
+          <div><span>WhatsApp</span><b>{{ phone(a.client.phone) }}</b></div>
+          <div><span>Estado</span><b><span class="chip" [class]="a.status">{{ statusLabel[a.status] }}</span></b></div>
+        </div>
+
+        <div class="status">
+          @if (a.status !== 'atendida') {
+            <button class="btn soft sm" (click)="setStatus('atendida')" [disabled]="busy()">✓ Atendida</button>
+          }
+          @if (a.status !== 'no_asistio') {
+            <button class="btn soft sm" (click)="setStatus('no_asistio')" [disabled]="busy()">No asistió</button>
+          }
+          @if (a.status !== 'cancelada') {
+            <button class="btn soft sm" (click)="setStatus('cancelada')" [disabled]="busy()">Cancelar</button>
+          } @else {
+            <button class="btn soft sm" (click)="setStatus('confirmada')" [disabled]="busy()">Reactivar</button>
+          }
+          <button class="btn soft sm" (click)="startMove()">Mover</button>
+        </div>
+
+        <button class="btn accent block" (click)="remind()">
+          {{ a.reminder_sent_at ? 'Volver a recordar por WhatsApp' : 'Recordar por WhatsApp' }}
+        </button>
+
+        <label class="field notes">
+          <span>Notas internas</span>
+          <textarea [(ngModel)]="notes" rows="2" placeholder="Ej.: prefiere degradado bajo, alergia a la lidocaína…"></textarea>
+        </label>
+        <div class="row">
+          <button class="btn ghost sm" (click)="saveNotes()" [disabled]="busy()">Guardar notas</button>
+          <button class="link danger-link" (click)="remove()">Borrar cita</button>
+        </div>
+      } @else {
+        <p class="muted">Elige el nuevo día, profesional y hora para {{ a.service.name }}.</p>
+        <div class="grid-2">
+          <label class="field">
+            <span>Profesional</span>
+            <select [ngModel]="professionalId()" (ngModelChange)="setProfessional($event)">
+              @for (p of prosForService(); track p.id) {
+                <option [ngValue]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </label>
+          <label class="field">
+            <span>Día</span>
+            <input type="date" [ngModel]="date()" (ngModelChange)="setDate($event)" />
+          </label>
+        </div>
+        <ng-container [ngTemplateOutlet]="slotsTpl"></ng-container>
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+        <div class="row end">
+          <button class="btn ghost" (click)="mode.set('view')">Volver</button>
+          @if (canForce()) {
+            <button class="btn soft" (click)="move(true)" [disabled]="busy()">Mover igual</button>
+          }
+          <button class="btn accent" (click)="move()" [disabled]="busy()">Mover cita</button>
+        </div>
+      }
+      @if (mode() === 'view' && error()) {
+        <p class="error">{{ error() }}</p>
+      }
+    } @else {
+      <header>
+        <div>
+          <span class="eyebrow">Nueva cita</span>
+          <h2>Agendar</h2>
+        </div>
+        <button class="btn ghost icon sm" (click)="closed.emit(false)" aria-label="Cerrar">✕</button>
+      </header>
+
+      <div class="form">
+        <label class="field">
+          <span>Servicio</span>
+          <select [ngModel]="serviceId()" (ngModelChange)="setService($event)">
+            @for (s of services(); track s.id) {
+              @if (s.active) {
+                <option [ngValue]="s.id">{{ s.name }} · {{ duration(s.duration) }} · {{ cop(s.price) }}</option>
+              }
+            }
+          </select>
+        </label>
+        <div class="grid-2">
+          <label class="field">
+            <span>Profesional</span>
+            <select [ngModel]="professionalId()" (ngModelChange)="setProfessional($event)">
+              <option [ngValue]="null">Elige…</option>
+              @for (p of prosForService(); track p.id) {
+                <option [ngValue]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </label>
+          <label class="field">
+            <span>Día</span>
+            <input type="date" [ngModel]="date()" (ngModelChange)="setDate($event)" />
+          </label>
+        </div>
+
+        <ng-container [ngTemplateOutlet]="slotsTpl"></ng-container>
+
+        <div class="field">
+          <span>Cliente</span>
+          @if (client(); as c) {
+            <div class="picked">
+              <div><b>{{ c.name }}</b><span class="muted"> · {{ phone(c.phone) }}</span></div>
+              <button class="link" (click)="client.set(null)">Cambiar</button>
+            </div>
+          } @else {
+            <input placeholder="Buscar por nombre o teléfono…" [(ngModel)]="clientQuery" (input)="searchClients()" />
+            @if (hits().length) {
+              <div class="hits">
+                @for (h of hits(); track h.id) {
+                  <button (click)="pickClient(h)"><b>{{ h.name }}</b> <span class="muted">{{ phone(h.phone) }}</span></button>
+                }
+              </div>
+            }
+            <div class="grid-2 new">
+              <input class="input" placeholder="O nombre del cliente nuevo" [(ngModel)]="newClient.name" />
+              <input class="input" placeholder="WhatsApp" inputmode="tel" [(ngModel)]="newClient.phone" />
+            </div>
+          }
+        </div>
+
+        <label class="field">
+          <span>Notas (opcional)</span>
+          <textarea [(ngModel)]="notes" rows="2"></textarea>
+        </label>
+
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+        <div class="row end">
+          <button class="btn ghost" (click)="closed.emit(false)">Cancelar</button>
+          @if (canForce()) {
+            <button class="btn soft" (click)="create(true)" [disabled]="busy()">Agendar igual</button>
+          }
+          <button class="btn accent" (click)="create()" [disabled]="busy()">Agendar cita</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<ng-template #slotsTpl>
+  <div class="field">
+    <span>Hora</span>
+    @if (loadingSlots()) {
+      <div class="spinner"></div>
+    } @else if (slotsForPro().length) {
+      <div class="slots">
+        @for (s of slotsForPro(); track s.time) {
+          <button class="slot" [class.sel]="time() === s.time" (click)="time.set(s.time); customTime = ''">{{ hour(s.time) }}</button>
+        }
+      </div>
+    } @else {
+      <small>No hay horas libres ese día con esa selección.</small>
+    }
+    <label class="custom">
+      <small>¿Otra hora? (por fuera del horario)</small>
+      <input type="time" step="300" [(ngModel)]="customTime" (ngModelChange)="time.set(null)" class="input" />
+    </label>
+  </div>
+</ng-template>

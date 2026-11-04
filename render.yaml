@@ -1,0 +1,24 @@
+# Render Blueprint: crea la API de Vellum (Docker, plan gratis).
+# Al crearla, Render pide DB_URL: pega la cadena de conexión de Neon (PostgreSQL).
+services:
+  - type: web
+    name: vellum-api
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: api
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /up
+    envVars:
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        value: https://vellum-api.onrender.com
+      - key: DB_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://vellum-citas.pages.dev,http://localhost:4310
+      - key: CRON_KEY
+        generateValue: true
+      - key: APP_LOCALE
+        value: es

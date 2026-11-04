@@ -1,0 +1,204 @@
+@if (loading()) {
+  <div class="loading">
+    <div class="spinner"></div>
+    @if (api.waking()) {
+      Despertando el servidor… tarda unos segundos la primera vez
+    } @else {
+      Cargando…
+    }
+  </div>
+} @else if (error()) {
+  <div class="loading">
+    <h2>Ups</h2>
+    <p>{{ error() }}</p>
+    <a routerLink="/" class="btn ghost">Ir a Vellum</a>
+  </div>
+} @else if (business(); as b) {
+  <header class="cover">
+    <div class="inner">
+      <span class="eyebrow">{{ kindLabel[b.kind] }}</span>
+      <h1>{{ b.name }}</h1>
+      @if (b.tagline) {
+        <p>{{ b.tagline }}</p>
+      }
+      <div class="meta">
+        @if (b.address) {
+          <span>📍 {{ b.address }}{{ b.city ? ', ' + b.city : '' }}</span>
+        }
+        @if (b.is_demo) {
+          <span class="chip">Negocio de demostración</span>
+        }
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    @if (step() !== 'done') {
+      <ol class="progress" aria-label="Pasos">
+        @for (label of ['Servicio', 'Profesional', 'Fecha y hora', 'Tus datos']; track label; let i = $index) {
+          <li [class.on]="stepIndex() >= i" [class.now]="stepIndex() === i">{{ label }}</li>
+        }
+      </ol>
+    }
+
+    <div class="layout" [class.solo]="step() === 'done' || !service()">
+      <section class="panel card">
+        @switch (step()) {
+          @case ('service') {
+            <h2>¿Qué te vas a hacer?</h2>
+            @for (cat of categories(); track cat.name) {
+              <h3 class="cat">{{ cat.name }}</h3>
+              <div class="list">
+                @for (s of cat.items; track s.id) {
+                  <button class="option" (click)="pickService(s)" [class.sel]="service()?.id === s.id">
+                    <div>
+                      <strong>{{ s.name }}</strong>
+                      @if (s.description) {
+                        <span class="muted">{{ s.description }}</span>
+                      }
+                    </div>
+                    <div class="price">
+                      <b>{{ cop(s.price) }}</b>
+                      <span class="muted">{{ duration(s.duration) }}</span>
+                    </div>
+                  </button>
+                }
+              </div>
+            } @empty {
+              <p class="empty">Este negocio aún no tiene servicios disponibles.</p>
+            }
+          }
+
+          @case ('professional') {
+            <button class="link back" (click)="back()">← Cambiar servicio</button>
+            <h2>¿Con quién?</h2>
+            <div class="pros">
+              <button class="pro" (click)="pickProfessional(null)">
+                <span class="avatar any">✦</span>
+                <strong>Cualquiera disponible</strong>
+                <span class="muted">Más horas para elegir</span>
+              </button>
+              @for (p of prosForService(); track p.id) {
+                <button class="pro" (click)="pickProfessional(p)">
+                  <span class="avatar" [style.background]="p.color">{{ initials(p.name) }}</span>
+                  <strong>{{ p.name }}</strong>
+                  <span class="muted">{{ p.title }}</span>
+                </button>
+              }
+            </div>
+          }
+
+          @case ('time') {
+            <button class="link back" (click)="back()">← {{ prosForService().length === 1 ? 'Cambiar servicio' : 'Cambiar profesional' }}</button>
+            <h2>Elige el día y la hora</h2>
+            <p class="muted month">{{ monthLabel() }}</p>
+            <div class="days" role="listbox" aria-label="Días">
+              @for (d of days(); track d.key) {
+                <button
+                  class="day"
+                  [class.sel]="date() === d.key"
+                  [class.closed]="openDays()[d.key] === false"
+                  (click)="pickDate(d.key)"
+                  [attr.aria-selected]="date() === d.key"
+                >
+                  <span>{{ d.name }}</span>
+                  <b>{{ d.day }}</b>
+                </button>
+              }
+            </div>
+
+            @if (loadingSlots()) {
+              <div class="loading small"><div class="spinner"></div></div>
+            } @else {
+              @for (g of slotGroups(); track g.name) {
+                <h3 class="cat">{{ g.name }}</h3>
+                <div class="slots">
+                  @for (s of g.items; track s.time) {
+                    <button class="slot" (click)="pickTime(s.time)" [class.sel]="time() === s.time">{{ hour(s.time) }}</button>
+                  }
+                </div>
+              } @empty {
+                <div class="empty">
+                  <p>No hay horas libres el {{ longDate(date()) }}.</p>
+                  <p>Prueba otro día{{ anyone() ? '' : ' u otro profesional' }}.</p>
+                </div>
+              }
+            }
+          }
+
+          @case ('details') {
+            <button class="link back" (click)="back()">← Cambiar la hora</button>
+            <h2>Tus datos</h2>
+            <p class="muted">Te escribiremos por WhatsApp para recordarte la cita.</p>
+            <form class="form" (ngSubmit)="confirm()">
+              <label class="field">
+                <span>Nombre completo</span>
+                <input name="name" [(ngModel)]="form.name" autocomplete="name" required />
+              </label>
+              <label class="field">
+                <span>WhatsApp</span>
+                <input name="phone" [(ngModel)]="form.phone" inputmode="tel" autocomplete="tel" placeholder="300 123 4567" required />
+              </label>
+              <label class="field">
+                <span>Correo (opcional)</span>
+                <input name="email" [(ngModel)]="form.email" type="email" autocomplete="email" />
+              </label>
+              <label class="field">
+                <span>¿Algo que debamos saber? (opcional)</span>
+                <textarea name="notes" [(ngModel)]="form.notes" rows="2"></textarea>
+              </label>
+              @if (formError()) {
+                <p class="error">{{ formError() }}</p>
+              }
+              <button class="btn accent lg block" [disabled]="sending()">
+                {{ sending() ? 'Reservando…' : 'Confirmar reserva' }}
+              </button>
+            </form>
+          }
+
+          @case ('done') {
+            @if (result(); as r) {
+              <div class="done">
+                <div class="check">✓</div>
+                <h2>¡Listo, {{ r.appointment.client.name.split(' ')[0] }}!</h2>
+                <p class="muted">Tu cita quedó reservada.</p>
+                <div class="ticket">
+                  <div><span class="muted">Servicio</span><b>{{ r.appointment.service.name }}</b></div>
+                  <div><span class="muted">Con</span><b>{{ r.appointment.professional.name }}</b></div>
+                  <div><span class="muted">Cuándo</span><b>{{ longDate(r.appointment.starts_at) }} · {{ hour(r.appointment.starts_at) }}</b></div>
+                  <div><span class="muted">Código</span><b class="code">{{ r.appointment.code }}</b></div>
+                </div>
+                <div class="actions">
+                  @if (r.whatsapp_link) {
+                    <a class="btn accent block" [href]="r.whatsapp_link" target="_blank" rel="noopener">Avisar por WhatsApp</a>
+                  }
+                  <a class="btn ghost block" [href]="calendarLink()" [attr.download]="'cita-' + r.appointment.code + '.ics'">Guardar en mi calendario</a>
+                  <a class="btn soft block" [routerLink]="['/cita', r.appointment.code]">Ver o cancelar mi cita</a>
+                </div>
+                <button class="link" (click)="restart()">Reservar otra cita</button>
+              </div>
+            }
+          }
+        }
+      </section>
+
+      @if (step() !== 'done' && service(); as s) {
+        <aside class="summary card">
+          <span class="eyebrow">Tu reserva</span>
+          <div class="line"><span>Servicio</span><b>{{ s.name }}</b></div>
+          <div class="line"><span>Duración</span><b>{{ duration(s.duration) }}</b></div>
+          @if (stepIndex() >= 2) {
+            <div class="line"><span>Profesional</span><b>{{ professional()?.name ?? 'Cualquiera disponible' }}</b></div>
+          }
+          @if (time()) {
+            <div class="line"><span>Cuándo</span><b>{{ longDate(date()) }}, {{ hour(time()!) }}</b></div>
+          }
+          <div class="total"><span>Total</span><b>{{ cop(s.price) }}</b></div>
+          <small class="muted">Pagas en el local.</small>
+        </aside>
+      }
+    </div>
+
+    <footer class="powered">Agenda con <a routerLink="/">Vellum</a></footer>
+  </main>
+}

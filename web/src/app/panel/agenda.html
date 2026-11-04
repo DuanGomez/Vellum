@@ -1,0 +1,140 @@
+<div class="bar">
+  <div class="title">
+    <span class="eyebrow">{{ view() === 'day' ? (isToday() ? 'Hoy' : 'Agenda del día') : 'Semana' }}</span>
+    <h1>
+      @if (view() === 'day') {
+        {{ longDate(date()) }}
+      } @else {
+        {{ shortDate(week()[0]?.day ?? date()) }} – {{ shortDate(week()[6]?.day ?? date()) }}
+      }
+    </h1>
+  </div>
+  <div class="controls">
+    <div class="seg">
+      <button (click)="move(-1)" aria-label="Anterior">‹</button>
+      <button (click)="goToday()">Hoy</button>
+      <button (click)="move(1)" aria-label="Siguiente">›</button>
+    </div>
+    <input type="date" class="input date" [ngModel]="dayKey()" (ngModelChange)="pickDate($event)" aria-label="Ir a una fecha" />
+    <div class="seg">
+      <button [class.on]="view() === 'day'" (click)="setView('day')">Día</button>
+      <button [class.on]="view() === 'week'" (click)="setView('week')">Semana</button>
+    </div>
+    <button class="btn accent" (click)="newAppointment()">+ Nueva cita</button>
+  </div>
+</div>
+
+@if (data(); as d) {
+  <div class="pills">
+    <button class="pill" [class.on]="filterPro() === null" (click)="filterPro.set(null)">Todo el equipo</button>
+    @for (p of d.professionals; track p.id) {
+      <button class="pill" [class.on]="filterPro() === p.id" (click)="filterPro.set(filterPro() === p.id ? null : p.id)">
+        <i class="dot" [style.background]="p.color"></i>{{ p.name }}
+      </button>
+    }
+    @if (view() === 'day') {
+      <span class="sum">
+        <b>{{ d.summary.total }}</b> citas · <b>{{ d.summary.attended }}</b> atendidas · <b>{{ cop(d.summary.expected) }}</b> esperado
+      </span>
+    }
+  </div>
+
+  @if (view() === 'day') {
+    <div class="board card" [style.--cols]="columns().length">
+      <div class="heads">
+        <div class="corner"></div>
+        @for (c of columns(); track c.pro.id) {
+          <div class="head">
+            <span class="avatar" [style.background]="c.pro.color">{{ initials(c.pro.name) }}</span>
+            <div>
+              <strong>{{ c.pro.name }}</strong>
+              <span class="muted">{{ c.count }} {{ c.count === 1 ? 'cita' : 'citas' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="grid" [style.height.px]="height()">
+        <div class="times">
+          @for (h of hours(); track h.top) {
+            <span [style.top.px]="h.top">{{ h.label }}</span>
+          }
+        </div>
+        @for (c of columns(); track c.pro.id) {
+          <div class="col" (click)="createAt($event, c.pro)" title="Clic para agendar a esa hora">
+            @for (h of hours(); track h.top) {
+              <i class="line" [style.top.px]="h.top"></i>
+            }
+            @for (w of c.work; track w.top) {
+              <div class="work" [style.top.px]="w.top" [style.height.px]="w.height"></div>
+            }
+            @for (o of c.offs; track o.top) {
+              <div class="off" [style.top.px]="o.top" [style.height.px]="o.height" (click)="$event.stopPropagation()">
+                <span>{{ o.reason || 'No disponible' }}</span>
+              </div>
+            }
+            @for (it of c.items; track it.a.id) {
+              <button
+                class="appt"
+                [class]="'appt ' + it.a.status + (it.compact ? ' compact' : '')"
+                [style.top.px]="it.top"
+                [style.height.px]="it.height"
+                [style.--c]="c.pro.color"
+                (click)="open(it.a, $event)"
+              >
+                <span class="t">{{ hour(it.a.starts_at) }}</span>
+                <strong>{{ it.a.client.name }}</strong>
+                <span class="s">{{ it.a.service.name }}</span>
+                @if (it.a.status === 'atendida') {
+                  <i class="badge">✓</i>
+                } @else if (it.a.status === 'no_asistio') {
+                  <i class="badge warn">!</i>
+                }
+              </button>
+            }
+          </div>
+        }
+        @if (nowTop() !== null) {
+          <div class="now" [style.top.px]="nowTop()"><span></span></div>
+        }
+      </div>
+      @if (!columns().length) {
+        <p class="empty">No hay profesionales activos. Agrégalos en «Equipo y horarios».</p>
+      }
+    </div>
+  } @else {
+    <div class="week">
+      @for (w of week(); track w.key) {
+        <section class="wday card" [class.today]="w.isToday">
+          <button class="whead" (click)="openDay(w.day)">
+            <span>{{ shortDate(w.day) }}</span>
+            <b>{{ w.items.length }}</b>
+          </button>
+          <div class="witems">
+            @for (a of w.items; track a.id) {
+              <button class="witem" [class]="'witem ' + a.status" [style.--c]="a.professional.color" (click)="open(a)">
+                <span class="t">{{ hour(a.starts_at) }}</span>
+                <span class="n">{{ a.client.name }}</span>
+                <span class="s">{{ a.service.name }}</span>
+              </button>
+            } @empty {
+              <p class="muted free">Libre</p>
+            }
+          </div>
+          <footer class="muted">{{ cop(w.revenue) }}</footer>
+        </section>
+      }
+    </div>
+  }
+} @else if (loading()) {
+  <div class="loading"><div class="spinner"></div>Cargando la agenda…</div>
+}
+
+@if (dialog(); as dlg) {
+  <v-appointment-dialog
+    [appointment]="dlg.appointment"
+    [preset]="dlg.preset"
+    [services]="services()"
+    [professionals]="data()?.professionals ?? []"
+    (closed)="closeDialog($event)"
+  />
+}

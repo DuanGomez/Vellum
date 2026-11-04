@@ -1,0 +1,21 @@
+# Cada hora pide a la API que envíe los recordatorios de WhatsApp que ya tocan.
+# Solo hace algo si el repo tiene el secreto CRON_KEY (el mismo valor que en Render)
+# y la API tiene configurada la API oficial de WhatsApp.
+name: Recordatorios por WhatsApp
+
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    env:
+      CRON_KEY: ${{ secrets.CRON_KEY }}
+    steps:
+      - name: Enviar recordatorios
+        if: env.CRON_KEY != ''
+        run: |
+          curl -fsS -X POST https://vellum-api.onrender.com/api/cron/reminders \
+            -H "X-Cron-Key: $CRON_KEY" -H "Accept: application/json" --max-time 120

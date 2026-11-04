@@ -1,0 +1,143 @@
+<div class="bar">
+  <div>
+    <span class="eyebrow">Equipo y horarios</span>
+    <h1>Quién atiende y cuándo</h1>
+    <p class="muted">Cada persona tiene su horario semanal, con pausas, y sus ausencias.</p>
+  </div>
+  <button class="btn accent" (click)="edit()">+ Agregar persona</button>
+</div>
+
+<div class="cards">
+  @for (p of pros(); track p.id) {
+    <article class="pro card" [class.off]="!p.active">
+      <header>
+        <span class="avatar" [style.background]="p.color">{{ initials(p.name) }}</span>
+        <div>
+          <h3>{{ p.name }}</h3>
+          <span class="muted">{{ p.title || 'Profesional' }}{{ p.active ? '' : ' · inactivo' }}</span>
+        </div>
+      </header>
+      <div class="week">
+        @for (wd of [1, 2, 3, 4, 5, 6, 7]; track wd) {
+          <div class="wd" [class.on]="(p.schedules ?? []).some(s => s.weekday === wd)" [title]="weekdays[wd - 1]">{{ weekdays[wd - 1][0] }}</div>
+        }
+      </div>
+      <p class="muted small">{{ summary(p) }} · {{ p.services?.length }} servicios</p>
+      @if (p.time_offs?.length) {
+        <div class="offs">
+          @for (t of p.time_offs; track t.id) {
+            <div class="offrow">
+              <span>🌙 {{ t.reason || 'Ausencia' }} · {{ shortDate(t.starts_at) }} {{ hour(t.starts_at) }}</span>
+              <button class="link" (click)="removeOff(t.id)">Quitar</button>
+            </div>
+          }
+        </div>
+      }
+      <div class="actions">
+        <button class="btn ghost sm" (click)="edit(p)">Editar horario</button>
+        <button class="btn soft sm" (click)="openOff(p)">Agregar ausencia</button>
+      </div>
+    </article>
+  }
+</div>
+
+@if (draft(); as d) {
+  <div class="backdrop" (click)="draft.set(null)">
+    <div class="dialog wide" (click)="$event.stopPropagation()">
+      <header>
+        <h2>{{ d.id ? d.name : 'Nueva persona' }}</h2>
+        <button class="btn ghost icon sm" (click)="draft.set(null)">✕</button>
+      </header>
+      <div class="form">
+        <div class="grid-2">
+          <label class="field"><span>Nombre</span><input [(ngModel)]="d.name" /></label>
+          <label class="field"><span>Cargo</span><input [(ngModel)]="d.title" placeholder="Barbero, Cosmetóloga…" /></label>
+        </div>
+        <div class="field">
+          <span>Color en la agenda</span>
+          <div class="colors">
+            @for (c of colors; track c) {
+              <button class="sw" [style.background]="c" [class.sel]="d.color === c" (click)="d.color = c" [attr.aria-label]="c"></button>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <span>Horario semanal</span>
+          <div class="days">
+            @for (day of d.days; track day.weekday) {
+              <div class="day" [class.on]="day.on">
+                <label class="toggle"><input type="checkbox" [(ngModel)]="day.on" />{{ weekdays[day.weekday - 1] }}</label>
+                @if (day.on) {
+                  <div class="ranges">
+                    @for (r of day.ranges; track $index) {
+                      <div class="range">
+                        <input type="time" step="900" [(ngModel)]="r.start" class="input" />
+                        <span>a</span>
+                        <input type="time" step="900" [(ngModel)]="r.end" class="input" />
+                        @if (day.ranges.length > 1) {
+                          <button class="btn ghost icon sm" (click)="day.ranges.splice($index, 1)" aria-label="Quitar tramo">−</button>
+                        }
+                      </div>
+                    }
+                    <div class="tools">
+                      <button class="link" (click)="addRange(day)">+ tramo</button>
+                      <button class="link" (click)="copyToAll(d, day)">Copiar a todos</button>
+                    </div>
+                  </div>
+                } @else {
+                  <span class="muted">Descansa</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <span>Servicios que hace</span>
+          <div class="checks">
+            @for (s of services(); track s.id) {
+              <label class="check"><input type="checkbox" [checked]="d.services.includes(s.id)" (change)="toggleService(d, s.id)" />{{ s.name }}</label>
+            }
+          </div>
+        </div>
+
+        <label class="check"><input type="checkbox" [(ngModel)]="d.active" /> Activo (recibe citas)</label>
+
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+        <div class="row">
+          @if (d.id) {
+            <button class="link danger" (click)="remove(d.id)">Quitar del equipo</button>
+          }
+          <button class="btn accent" (click)="save()" [disabled]="busy()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (offFor(); as p) {
+  <div class="backdrop" (click)="offFor.set(null)">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <header>
+        <div>
+          <span class="eyebrow">Ausencia</span>
+          <h2>{{ p.name }}</h2>
+        </div>
+        <button class="btn ghost icon sm" (click)="offFor.set(null)">✕</button>
+      </header>
+      <div class="form">
+        <div class="grid-2">
+          <label class="field"><span>Desde el día</span><input type="date" [(ngModel)]="off.date" /></label>
+          <label class="field"><span>a las</span><input type="time" [(ngModel)]="off.from" /></label>
+          <label class="field"><span>Hasta el día</span><input type="date" [(ngModel)]="off.toDate" /></label>
+          <label class="field"><span>a las</span><input type="time" [(ngModel)]="off.to" /></label>
+        </div>
+        <label class="field"><span>Motivo (opcional)</span><input [(ngModel)]="off.reason" placeholder="Vacaciones, cita médica, capacitación…" /></label>
+        <button class="btn accent" (click)="saveOff()">Guardar ausencia</button>
+      </div>
+    </div>
+  </div>
+}

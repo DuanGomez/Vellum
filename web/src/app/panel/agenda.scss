@@ -1,0 +1,429 @@
+:host {
+  display: block;
+  padding: 22px clamp(14px, 3vw, 32px);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+
+  h1 {
+    font-size: clamp(26px, 3.4vw, 36px);
+    margin-top: 4px;
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--card);
+
+  button {
+    height: 40px;
+    min-width: 42px;
+    padding: 0 14px;
+    border: 0;
+    background: none;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--paper);
+    }
+
+    &.on {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    & + button {
+      border-left: 1px solid var(--line);
+    }
+  }
+}
+
+.date {
+  width: auto;
+  min-height: 40px;
+  height: 40px;
+  border-radius: 999px;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  .sum {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--muted);
+
+    b {
+      color: var(--ink);
+    }
+  }
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+
+  &.on {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+}
+
+/* --- Vista de día ----------------------------------------------------- */
+
+.board {
+  overflow: auto;
+  max-height: calc(100vh - 210px);
+}
+
+.heads,
+.grid {
+  display: grid;
+  grid-template-columns: 64px repeat(var(--cols), minmax(170px, 1fr));
+  min-width: calc(64px + var(--cols) * 170px);
+}
+
+.heads {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+.corner {
+  border-right: 1px solid var(--line);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-right: 1px solid var(--line);
+
+  strong {
+    display: block;
+    font-size: 14px;
+  }
+
+  span.muted {
+    font-size: 12px;
+  }
+}
+
+.grid {
+  position: relative;
+}
+
+.times {
+  position: relative;
+  border-right: 1px solid var(--line);
+
+  span {
+    position: absolute;
+    right: 8px;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+
+    &:first-child {
+      transform: none;
+    }
+  }
+}
+
+.col {
+  position: relative;
+  border-right: 1px solid var(--line);
+  cursor: copy;
+  background: repeating-linear-gradient(-45deg, var(--paper) 0 6px, var(--paper-2) 6px 7px);
+}
+
+.line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--line);
+  z-index: 1;
+}
+
+.work {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--card);
+}
+
+.off {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 2;
+  border-radius: 10px;
+  background: repeating-linear-gradient(45deg, #ece5d9 0 8px, #e3dacb 8px 16px);
+  border: 1px dashed var(--line-2);
+  cursor: default;
+
+  span {
+    display: block;
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--muted);
+  }
+}
+
+.appt {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 2;
+  display: grid;
+  align-content: start;
+  gap: 0;
+  padding: 5px 8px 5px 10px;
+  overflow: hidden;
+  border: 0;
+  border-left: 4px solid var(--c);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c) 14%, white);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: transform 0.1s, box-shadow 0.15s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+    z-index: 4;
+  }
+
+  .t {
+    font-size: 11px;
+    font-weight: 800;
+    color: color-mix(in srgb, var(--c) 70%, black);
+  }
+
+  strong {
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .s {
+    font-size: 12px;
+    color: var(--ink-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.atendida {
+    background: color-mix(in srgb, var(--c) 7%, white);
+  }
+
+  &.cancelada {
+    opacity: 0.45;
+    background: var(--paper);
+
+    strong {
+      text-decoration: line-through;
+    }
+  }
+
+  &.no_asistio {
+    background: var(--amber-soft);
+    border-left-color: var(--amber);
+  }
+}
+
+.badge {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--sage);
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+
+  &.warn {
+    background: var(--amber);
+  }
+}
+
+.now {
+  position: absolute;
+  left: 64px;
+  right: 0;
+  z-index: 5;
+  height: 2px;
+  background: var(--danger);
+  pointer-events: none;
+
+  span {
+    position: absolute;
+    left: -6px;
+    top: -5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--danger);
+  }
+}
+
+/* --- Vista de semana -------------------------------------------------- */
+
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+.wday {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+  overflow: hidden;
+
+  &.today {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  footer {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    border-top: 1px solid var(--line);
+  }
+}
+
+.whead {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  font-weight: 800;
+  text-transform: capitalize;
+  cursor: pointer;
+
+  b {
+    font-family: var(--serif);
+  }
+}
+
+.witems {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.witem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 8px;
+  padding: 6px 8px;
+  border: 0;
+  border-left: 3px solid var(--c);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--c) 10%, white);
+  text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+
+  .t {
+    font-weight: 800;
+    grid-row: span 2;
+  }
+
+  .n {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .s {
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.cancelada {
+    opacity: 0.45;
+    text-decoration: line-through;
+  }
+}
+
+.free {
+  padding: 10px;
+  font-size: 13px;
+}
+
+/* Citas cortas: hora y cliente en una sola línea */
+.appt.compact {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 6px;
+
+  .s {
+    display: none;
+  }
+}
