@@ -17,5 +17,5 @@ jobs:
       - name: Enviar recordatorios
         if: env.CRON_KEY != ''
         run: |
-          curl -fsS -X POST https://vellum-api.onrender.com/api/cron/reminders \
+          curl -fsS -X POST https://vellum-citas-api.onrender.com/api/cron/reminders \
             -H "X-Cron-Key: $CRON_KEY" -H "Accept: application/json" --max-time 120

@@ -2,7 +2,7 @@
 # Al crearla, Render pide DB_URL: pega la cadena de conexión de Neon (PostgreSQL).
 services:
   - type: web
-    name: vellum-api
+    name: vellum-citas-api
     runtime: docker
     plan: free
     region: virginia
@@ -13,7 +13,7 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: APP_URL
-        value: https://vellum-api.onrender.com
+        value: https://vellum-citas-api.onrender.com
       - key: DB_URL
         sync: false
       - key: CORS_ORIGINS

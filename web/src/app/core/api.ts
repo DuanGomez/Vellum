@@ -7,7 +7,7 @@ import { Appointment, Business, Session } from './models';
 export const API_URL =
   location.hostname === 'localhost' || location.hostname === '127.0.0.1'
     ? 'http://127.0.0.1:8010/api'
-    : 'https://vellum-api.onrender.com/api';
+    : 'https://vellum-citas-api.onrender.com/api';
 
 const TOKEN_KEY = 'vellum.token';
 
