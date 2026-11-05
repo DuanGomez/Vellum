@@ -3,6 +3,12 @@ FROM dunglas/frankenphp:1-php8.4
 
 RUN install-php-extensions pdo_pgsql intl zip opcache pcntl
 
+# El binario trae la capacidad de usar puertos bajos (setcap) y Render no la
+# permite («Operation not permitted»). Copiarlo la quita; usamos $PORT (alto).
+RUN cp /usr/local/bin/frankenphp /tmp/frankenphp \
+    && mv /tmp/frankenphp /usr/local/bin/frankenphp \
+    && chmod 755 /usr/local/bin/frankenphp
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
