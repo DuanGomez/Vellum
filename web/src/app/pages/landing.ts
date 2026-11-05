@@ -156,7 +156,7 @@ interface Demo {
     </section>
 
     <footer>
-      <span>Vellum · hecho en Medellín por <a href="https://dcodea.dcodea-correo.workers.dev" target="_blank" rel="noopener">Dcodea</a></span>
+      <span>Vellum · hecho en Medellín por <a href="https://dcodea.pages.dev" target="_blank" rel="noopener">Dcodea</a></span>
       <a href="https://github.com/DuanGomez/Vellum" target="_blank" rel="noopener">Código en GitHub</a>
     </footer>
 

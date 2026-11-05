@@ -54,4 +54,4 @@ Con una cuenta de WhatsApp Business en Meta, agrega en Render `WHATSAPP_TOKEN`, 
 
 ---
 
-Hecho por [Duan Gómez](https://duangomez.pages.dev) · [Dcodea](https://dcodea.dcodea-correo.workers.dev)
+Hecho por [Duan Gómez](https://duangomez.pages.dev) · [Dcodea](https://dcodea.pages.dev)
