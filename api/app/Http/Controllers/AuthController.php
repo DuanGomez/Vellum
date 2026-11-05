@@ -87,7 +87,7 @@ class AuthController extends Controller
     /** Entrar a un negocio de demostración sin crear cuenta. */
     public function demo(Request $r)
     {
-        DemoData::freshen();
+        DemoData::freshenLater();
         $kind = $r->validate(['kind' => ['required', Rule::in(['barberia', 'estetica', 'odontologia'])]])['kind'];
         $business = Business::where('is_demo', true)->where('kind', $kind)->firstOrFail();
         $user = User::where('business_id', $business->id)->where('role', 'owner')->firstOrFail();

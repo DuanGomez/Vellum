@@ -61,6 +61,19 @@ class DemoData
         Cache::lock('vellum-demo-reset', 120)->get(fn () => self::reset());
     }
 
+    /**
+     * Si las demos ya existen, se renuevan después de responder (nadie espera);
+     * solo la primera vez, sin demos, se crean antes de seguir.
+     */
+    public static function freshenLater(): void
+    {
+        if (Business::where('is_demo', true)->count() < count(self::businesses())) {
+            self::freshen();
+            return;
+        }
+        app()->terminating(fn () => self::freshen());
+    }
+
     public static function reset(): void
     {
         mt_srand(20261104);

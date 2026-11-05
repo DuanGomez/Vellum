@@ -24,8 +24,7 @@ class PublicController extends Controller
     {
         $b = $this->business($slug);
         if ($b->is_demo) {
-            DemoData::freshen();
-            $b = $this->business($slug);
+            DemoData::freshenLater();
         }
 
         return [

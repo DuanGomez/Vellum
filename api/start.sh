@@ -12,6 +12,7 @@ php artisan package:discover --ansi
 php artisan config:cache
 php artisan route:cache
 php artisan migrate --force
-php artisan vellum:boot
+# Las demos se revisan en segundo plano: el servidor atiende de una vez
+php artisan vellum:boot &
 
 exec frankenphp php-server --listen ":${PORT:-8080}" --root public/
