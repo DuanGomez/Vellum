@@ -3,8 +3,10 @@ import { Router, Routes } from '@angular/router';
 import { Api } from './core/api';
 
 const signedIn = async () => {
+  // inject() solo funciona antes del primer await
   const api = inject(Api);
-  return (await api.restore()) || inject(Router).parseUrl('/entrar');
+  const router = inject(Router);
+  return (await api.restore()) || router.parseUrl('/entrar');
 };
 
 export const routes: Routes = [
