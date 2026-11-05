@@ -32,8 +32,8 @@ class ClientsController extends Controller
             }))
             ->withCount(['appointments as visits' => fn ($w) => $w->where('status', 'atendida')])
             ->withCount(['appointments as no_shows' => fn ($w) => $w->where('status', 'no_asistio')])
-            ->withMax('appointments as last_visit', 'starts_at')
-            ->orderByRaw('last_visit is null, last_visit desc') // los que nunca vinieron, al final
+            ->withMax(['appointments as last_visit' => fn ($w) => $w->where('starts_at', '<=', Availability::now()->format('Y-m-d H:i:s'))->where('status', '!=', 'cancelada')], 'starts_at')
+            ->orderByRaw('last_visit desc nulls last') // los que nunca vinieron, al final (PostgreSQL y SQLite)
             ->limit($q !== '' ? 20 : 200)
             ->get()
             ->map(fn ($c) => [
